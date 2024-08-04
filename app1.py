@@ -50,10 +50,12 @@ def add_parameter_ui(classifier_name):
     if classifier_name == 'SVM':
         C = st.sidebar.slider('C', 0.01, 10.0)
         params['C'] = C  # Degree of correct classification
+        gamma = st.sidebar.selectbox('Gamma', ('scale', 'auto'))
+        params['gamma'] = gamma  # Gamma parameter for SVM
 
     elif classifier_name == 'KNN':
-        n_neighbors = st.sidebar.slider('K', 1, 15)
-        params['K'] = n_neighbors  # Number of nearest neighbors
+        n_neighbors = st.sidebar.slider('n_neighbors', 1, 15)
+        params['n_neighbors'] = n_neighbors  # Number of nearest neighbors
 
     else:
         max_depth = st.sidebar.slider('max_depth', 2, 15)
@@ -62,12 +64,6 @@ def add_parameter_ui(classifier_name):
         n_estimators = st.sidebar.slider('n_estimators', 1, 100)
         params['n_estimators'] = n_estimators  # Number of trees in Random Forest
 
-    return params
-
-# Example usage:
-selected_classifier = st.sidebar.selectbox("Select Classifier", ("SVM", "KNN", "Random Forest"))
-classifier_params = add_parameter_ui(selected_classifier)
-
 def get_classifier(classifier_name, params):
     clf = None
 
@@ -75,7 +71,10 @@ def get_classifier(classifier_name, params):
         clf = SVC(C=params['C'], kernel='rbf', gamma=params['gamma'])
 
     elif classifier_name == 'KNN':
-        clf = KNeighborsClassifier(K=params['K'])
+        if 'n_neighbors' in params:
+            clf = KNeighborsClassifier(n_neighbors=params['n_neighbors'])
+        else:
+            clf = KNeighborsClassifier(n_neighbors=5)
 
     else:
         clf = RandomForestClassifier(
@@ -86,7 +85,7 @@ def get_classifier(classifier_name, params):
 
     return clf
 
-
+add_parameter_ui(classifier_name)
 clf = get_classifier(classifier_name,  params)
 
 
@@ -101,3 +100,14 @@ acc = accuracy_score(y_test, y_pred)
 st.write(f'Classifier = {classifier_name}')
 st.write(f'Accuracy = {acc}')
 
+
+# Create a scatter plot to visualize the data
+pca = PCA(n_components=2)
+x_pca = pca.fit_transform(x_test)
+
+fig, ax = plt.subplots()
+ax.scatter(x_pca[:, 0], x_pca[:, 1], c=y_test)
+ax.set_xlabel('Principal Component 1')
+ax.set_ylabel('Principal Component 2')
+ax.set_title('Scatter Plot of Test Data')
+st.pyplot(fig)
